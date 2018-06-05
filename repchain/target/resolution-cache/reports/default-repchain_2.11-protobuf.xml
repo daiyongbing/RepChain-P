@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="ivy-report.xsl"?>
+<ivy-report version="1.0">
+	<info
+		organisation="default"
+		module="repchain_2.11"
+		revision="0.1"
+		conf="protobuf"
+		confs="compile, runtime, test, provided, optional, protobuf, compile-internal, runtime-internal, test-internal, plugin, sources, docs, pom, scala-tool"
+		date="20180605113300"/>
+	<dependencies>
+		<module organisation="com.trueaccord.scalapb" name="scalapb-runtime_2.11">
+			<revision name="0.6.0-pre4" status="release" pubdate="20170427233254" resolver="sbt-chain" artresolver="sbt-chain" homepage="https://github.com/scalapb/ScalaPB" downloaded="false" searched="false" default="false" conf="default, compile, runtime, default(compile), master" position="0">
+				<license name="Apache 2" url="http://www.apache.org/licenses/LICENSE-2.0.txt"/>
+				<metadata-artifact status="no" details="" size="3537" time="0" location="C:\Users\vic\.ivy2\cache\com.trueaccord.scalapb\scalapb-runtime_2.11\ivy-0.6.0-pre4.xml" searched="false" origin-is-local="false" origin-location="https://repo1.maven.org/maven2/com/trueaccord/scalapb/scalapb-runtime_2.11/0.6.0-pre4/scalapb-runtime_2.11-0.6.0-pre4.pom"/>
+				<caller organisation="default" name="repchain_2.11" conf="protobuf" rev="0.6.0-pre4" rev-constraint-default="0.6.0-pre4" rev-constraint-dynamic="0.6.0-pre4" callerrev="0.1"/>
+				<artifacts>
+					<artifact name="scalapb-runtime_2.11" type="jar" ext="jar" status="no" details="" size="3793567" time="0" location="C:\Users\vic\.ivy2\cache\com.trueaccord.scalapb\scalapb-runtime_2.11\jars\scalapb-runtime_2.11-0.6.0-pre4.jar">
+						<origin-location is-local="false" location="https://repo1.maven.org/maven2/com/trueaccord/scalapb/scalapb-runtime_2.11/0.6.0-pre4/scalapb-runtime_2.11-0.6.0-pre4.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="com.google.protobuf" name="protobuf-java">
+			<revision name="3.2.0" status="release" pubdate="20170128103320" resolver="sbt-chain" artresolver="sbt-chain" homepage="" downloaded="false" searched="false" default="false" conf="compile, runtime(*), master(compile), runtime, compile(*), master" position="6">
+				<license name="New BSD license" url="http://www.opensource.org/licenses/bsd-license.php"/>
+				<metadata-artifact status="no" details="" size="5138" time="0" location="C:\Users\vic\.ivy2\cache\com.google.protobuf\protobuf-java\ivy-3.2.0.xml" searched="false" origin-is-local="false" origin-location="https://repo1.maven.org/maven2/com/google/protobuf/protobuf-java/3.2.0/protobuf-java-3.2.0.pom"/>
+				<caller organisation="com.trueaccord.scalapb" name="scalapb-runtime_2.11" conf="default, compile, runtime, master" rev="3.2.0" rev-constraint-default="3.2.0" rev-constraint-dynamic="3.2.0" callerrev="0.6.0-pre4"/>
+				<artifacts>
+					<artifact name="protobuf-java" type="bundle" ext="jar" status="no" details="" size="1347123" time="0" location="C:\Users\vic\.ivy2\cache\com.google.protobuf\protobuf-java\bundles\protobuf-java-3.2.0.jar">
+						<origin-location is-local="false" location="https://repo1.maven.org/maven2/com/google/protobuf/protobuf-java/3.2.0/protobuf-java-3.2.0.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="com.lihaoyi" name="fastparse_2.11">
+			<revision name="0.4.2" status="release" pubdate="20161022173219" resolver="sbt-chain" artresolver="sbt-chain" homepage="https://github.com/lihaoyi/scala-parser" downloaded="false" searched="false" default="false" conf="compile, runtime(*), master(compile), runtime, compile(*), master" position="3">
+				<license name="MIT license" url="http://www.opensource.org/licenses/mit-license.php"/>
+				<metadata-artifact status="no" details="" size="3562" time="0" location="C:\Users\vic\.ivy2\cache\com.lihaoyi\fastparse_2.11\ivy-0.4.2.xml" searched="false" origin-is-local="false" origin-location="https://repo1.maven.org/maven2/com/lihaoyi/fastparse_2.11/0.4.2/fastparse_2.11-0.4.2.pom"/>
+				<caller organisation="com.trueaccord.scalapb" name="scalapb-runtime_2.11" conf="default, compile, runtime, master" rev="0.4.2" rev-constraint-default="0.4.2" rev-constraint-dynamic="0.4.2" callerrev="0.6.0-pre4"/>
+				<artifacts>
+					<artifact name="fastparse_2.11" type="jar" ext="jar" status="no" details="" size="336221" time="0" location="C:\Users\vic\.ivy2\cache\com.lihaoyi\fastparse_2.11\jars\fastparse_2.11-0.4.2.jar">
+						<origin-location is-local="false" location="https://repo1.maven.org/maven2/com/lihaoyi/fastparse_2.11/0.4.2/fastparse_2.11-0.4.2.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="com.lihaoyi" name="fastparse-utils_2.11">
+			<revision name="0.4.2" status="release" pubdate="20161022173157" resolver="sbt-chain" artresolver="sbt-chain" homepage="https://github.com/lihaoyi/scala-parser" downloaded="false" searched="false" default="false" conf="compile, runtime(*), master(compile), runtime, compile(*), master" position="4">
+				<license name="MIT license" url="http://www.opensource.org/licenses/mit-license.php"/>
+				<metadata-artifact status="no" details="" size="3429" time="0" location="C:\Users\vic\.ivy2\cache\com.lihaoyi\fastparse-utils_2.11\ivy-0.4.2.xml" searched="false" origin-is-local="false" origin-location="https://repo1.maven.org/maven2/com/lihaoyi/fastparse-utils_2.11/0.4.2/fastparse-utils_2.11-0.4.2.pom"/>
+				<caller organisation="com.lihaoyi" name="fastparse_2.11" conf="compile, runtime" rev="0.4.2" rev-constraint-default="0.4.2" rev-constraint-dynamic="0.4.2" callerrev="0.4.2"/>
+				<artifacts>
+					<artifact name="fastparse-utils_2.11" type="jar" ext="jar" status="no" details="" size="77868" time="0" location="C:\Users\vic\.ivy2\cache\com.lihaoyi\fastparse-utils_2.11\jars\fastparse-utils_2.11-0.4.2.jar">
+						<origin-location is-local="false" location="https://repo1.maven.org/maven2/com/lihaoyi/fastparse-utils_2.11/0.4.2/fastparse-utils_2.11-0.4.2.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="com.lihaoyi" name="sourcecode_2.11">
+			<revision name="0.1.3" status="release" pubdate="20161022013026" resolver="sbt-chain" artresolver="sbt-chain" homepage="https://github.com/lihaoyi/sourcecode" downloaded="false" searched="false" default="false" conf="compile, runtime(*), master(compile), runtime, compile(*), master" position="5">
+				<license name="MIT license" url="http://www.opensource.org/licenses/mit-license.php"/>
+				<metadata-artifact status="no" details="" size="3001" time="0" location="C:\Users\vic\.ivy2\cache\com.lihaoyi\sourcecode_2.11\ivy-0.1.3.xml" searched="false" origin-is-local="false" origin-location="https://repo1.maven.org/maven2/com/lihaoyi/sourcecode_2.11/0.1.3/sourcecode_2.11-0.1.3.pom"/>
+				<caller organisation="com.lihaoyi" name="fastparse-utils_2.11" conf="compile, runtime" rev="0.1.3" rev-constraint-default="0.1.3" rev-constraint-dynamic="0.1.3" callerrev="0.4.2"/>
+				<caller organisation="com.lihaoyi" name="fastparse_2.11" conf="compile, runtime" rev="0.1.3" rev-constraint-default="0.1.3" rev-constraint-dynamic="0.1.3" callerrev="0.4.2"/>
+				<artifacts>
+					<artifact name="sourcecode_2.11" type="jar" ext="jar" status="no" details="" size="116579" time="0" location="C:\Users\vic\.ivy2\cache\com.lihaoyi\sourcecode_2.11\jars\sourcecode_2.11-0.1.3.jar">
+						<origin-location is-local="false" location="https://repo1.maven.org/maven2/com/lihaoyi/sourcecode_2.11/0.1.3/sourcecode_2.11-0.1.3.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="com.trueaccord.lenses" name="lenses_2.11">
+			<revision name="0.4.11" status="release" pubdate="20170424135259" resolver="sbt-chain" artresolver="sbt-chain" homepage="https://github.com/trueaccord/lenses" downloaded="false" searched="false" default="false" conf="compile, runtime(*), master(compile), runtime, compile(*), master" position="2">
+				<license name="Apache 2" url="http://www.apache.org/licenses/LICENSE-2.0.txt"/>
+				<metadata-artifact status="no" details="" size="2939" time="0" location="C:\Users\vic\.ivy2\cache\com.trueaccord.lenses\lenses_2.11\ivy-0.4.11.xml" searched="false" origin-is-local="false" origin-location="https://repo1.maven.org/maven2/com/trueaccord/lenses/lenses_2.11/0.4.11/lenses_2.11-0.4.11.pom"/>
+				<caller organisation="com.trueaccord.scalapb" name="scalapb-runtime_2.11" conf="default, compile, runtime, master" rev="0.4.11" rev-constraint-default="0.4.11" rev-constraint-dynamic="0.4.11" callerrev="0.6.0-pre4"/>
+				<artifacts>
+					<artifact name="lenses_2.11" type="jar" ext="jar" status="no" details="" size="55210" time="0" location="C:\Users\vic\.ivy2\cache\com.trueaccord.lenses\lenses_2.11\jars\lenses_2.11-0.4.11.jar">
+						<origin-location is-local="false" location="https://repo1.maven.org/maven2/com/trueaccord/lenses/lenses_2.11/0.4.11/lenses_2.11-0.4.11.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+		<module organisation="org.scala-lang" name="scala-library">
+			<revision name="2.11.11" status="release" pubdate="20170414035031" resolver="sbt-chain" artresolver="sbt-chain" homepage="http://www.scala-lang.org/" extra-info.apiURL="http://www.scala-lang.org/api/2.11.11/" downloaded="false" searched="false" default="false" conf="compile, runtime(*), master(compile), runtime, compile(*), master" position="1">
+				<license name="BSD 3-Clause" url="http://www.scala-lang.org/license.html"/>
+				<metadata-artifact status="no" details="" size="2688" time="0" location="C:\Users\vic\.ivy2\cache\org.scala-lang\scala-library\ivy-2.11.11.xml" searched="false" origin-is-local="false" origin-location="https://repo1.maven.org/maven2/org/scala-lang/scala-library/2.11.11/scala-library-2.11.11.pom"/>
+				<caller organisation="com.lihaoyi" name="sourcecode_2.11" conf="compile, runtime" rev="2.11.11" rev-constraint-default="2.11.11" rev-constraint-dynamic="2.11.11" callerrev="0.1.3"/>
+				<caller organisation="com.lihaoyi" name="fastparse-utils_2.11" conf="compile, runtime" rev="2.11.11" rev-constraint-default="2.11.11" rev-constraint-dynamic="2.11.11" callerrev="0.4.2"/>
+				<caller organisation="com.trueaccord.scalapb" name="scalapb-runtime_2.11" conf="default, compile, runtime, master" rev="2.11.11" rev-constraint-default="2.11.11" rev-constraint-dynamic="2.11.11" callerrev="0.6.0-pre4"/>
+				<caller organisation="com.trueaccord.lenses" name="lenses_2.11" conf="compile, runtime" rev="2.11.11" rev-constraint-default="2.11.11" rev-constraint-dynamic="2.11.11" callerrev="0.4.11"/>
+				<caller organisation="com.lihaoyi" name="fastparse_2.11" conf="compile, runtime" rev="2.11.11" rev-constraint-default="2.11.11" rev-constraint-dynamic="2.11.11" callerrev="0.4.2"/>
+				<artifacts>
+					<artifact name="scala-library" type="jar" ext="jar" status="no" details="" size="5748808" time="0" location="C:\Users\vic\.ivy2\cache\org.scala-lang\scala-library\jars\scala-library-2.11.11.jar">
+						<origin-location is-local="false" location="https://repo1.maven.org/maven2/org/scala-lang/scala-library/2.11.11/scala-library-2.11.11.jar"/>
+					</artifact>
+				</artifacts>
+			</revision>
+		</module>
+	</dependencies>
+</ivy-report>

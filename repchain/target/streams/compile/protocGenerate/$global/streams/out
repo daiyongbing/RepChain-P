@@ -1,0 +1,5 @@
+[0m[[0minfo[0m] [0mCompiling 1 protobuf files to F:\RepChain-V0.7\repchain\target\scala-2.11\src_managed\main[0m
+[0m[[0mdebug[0m] [0mprotoc options:[0m
+[0m[[0minfo[0m] [0mCompiling schema F:\RepChain-V0.7\repchain\src\main\protobuf\peer.proto[0m
+[0m[[0minfo[0m] [0mCompiling protobuf[0m
+[0m[[0minfo[0m] [0mProtoc target directory: F:\RepChain-V0.7\repchain\target\scala-2.11\src_managed\main[0m
