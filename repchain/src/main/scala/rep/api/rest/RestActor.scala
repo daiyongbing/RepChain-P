@@ -64,7 +64,7 @@ import rep.sc.Shim
 import rep.utils.SerializeUtils
 import IdxPrefix._
 import java.util.Base64
-
+import com.fasterxml.jackson.core.Base64Variants
 
 /**
  * RestActor伴生object，包含可接受的传入消息定义，以及处理的返回结果定义。
@@ -79,6 +79,10 @@ object RestActor {
   
   case class SystemStart(cout: Int)
   case class SystemStop(from: Int, to: Int)
+
+  //add by daiyongbing on 2018-05-06
+  case class HeightForBlockHash(height: Int)
+  case class PostBlockHash( blockheight: Int, currentblockhash: String);
 
   case class BlockId(bid: String)
   case class BlockHeight(h: Int)
@@ -352,5 +356,19 @@ class RestActor extends Actor with ModuleHelper with RepLogging {
       } else {
         sender ! QueryHash("当前"+ph.hash+"未上链")
       }
+
+    /**
+      *@author 代永兵
+      *@since 2018-06-05
+      */
+    case HeightForBlockHash(h) =>
+      val blockhash:String = sr.getBlockHashByHeight(h)
+      val base64hash = Base64Variants.getDefaultVariant.encode(blockhash.getBytes())
+      val strhash = new String(base64hash)
+      val bh:PostBlockHash = strhash match {
+        case null => PostBlockHash(h, null)
+        case _ => PostBlockHash(h, strhash)
+      }
+      sender ! bh
   }
 }

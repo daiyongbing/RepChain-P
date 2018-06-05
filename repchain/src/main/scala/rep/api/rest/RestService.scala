@@ -278,7 +278,7 @@ class HashVerifyService(ra: ActorRef)(implicit executionContext: ExecutionContex
   implicit val formats = DefaultFormats
   implicit val timeout = Timeout(20.seconds)
 
-  val route = verifyImageHash
+  val route = verifyImageHash ~ getBlockHashByHeight
   
   @Path("/verifyHash")
   @ApiOperation(value = "返回hash是否存在", notes = "", nickname = "verifyHash", httpMethod = "POST")
@@ -291,6 +291,25 @@ class HashVerifyService(ra: ActorRef)(implicit executionContext: ExecutionContex
          entity(as[PostHash]) { PostHash =>
           complete { (ra ? PostHash).mapTo[QueryHash] }
         }
+      }
+    }
+
+  /**
+    * @author 代永兵
+    * @param blockHeight:区块高度
+    * @return BlockHash
+    * @since 2018-06-05
+    */
+  @Path("/getBlockHashByHeight/{blockHeight}")
+  @ApiOperation(value = "返回指定高度的区块hash", notes = "", nickname = "getBlockHashByHeight", httpMethod = "GET")
+  @ApiImplicitParams(Array(
+    new ApiImplicitParam(name = "blockHeight", value = "区块高度", required = true, dataType = "int", paramType = "path")))
+  @ApiResponses(Array(
+    new ApiResponse(code = 200, message = "返回当前高度区块的hash", response = classOf[PostBlockHash])))
+  def getBlockHashByHeight =
+    path("hash" / "getBlockHashByHeight" / Segment) { blockHeight =>
+      get {
+        complete { (ra ? HeightForBlockHash(blockHeight.toInt)).mapTo[PostBlockHash] }
       }
     }
   }

@@ -9,3 +9,5 @@ update
 clean
 compile
 all {file:/F:/RepChain-V0.7/repchain/}repchain/products {file:/F:/RepChain-V0.7/repchain/}repchain/test:products
+;reload; set _root_.org.jetbrains.sbt.StructureKeys.sbtStructureOptions in Global := "download resolveClassifiers" ;*/*:dumpStructureTo C:/Users/vic/AppData/Local/Temp/sbt-structure.xml; session clear-all
+all {file:/D:/RepChain-PersonalDevEdition/repchain/}repchain/products {file:/D:/RepChain-PersonalDevEdition/repchain/}repchain/test:products

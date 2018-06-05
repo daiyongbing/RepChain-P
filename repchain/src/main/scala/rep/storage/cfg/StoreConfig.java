@@ -164,6 +164,9 @@ public class StoreConfig {
 			e.printStackTrace();
 		}*/
 		File f = new File(bpath);
+		if (!f.exists()) {
+			f.mkdirs();
+		}
 		long l = f.getFreeSpace();
 		return l;
 	}
