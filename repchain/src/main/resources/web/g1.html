@@ -261,10 +261,20 @@
         }).join('');
         return btoa(binstr);
     }
+    <!--add by daiyongbing on 2018-06-06 解决docker封装后url路径与实际请求路径不匹配的问题-->
+    function getSpecificParam(paramname) {
+        var reg = new RegExp('(^|&)' + paramname+ '=([^&]*)(&|$)', 'i');
+        var paramValue = window.location.search.substr(1).match(reg);
+        if (paramValue != null && paramValue != "") {
+            return "/user/"+unescape(paramValue[2]);
+        } else
+            return "";
+    }
 
     function connect(){
+        var username = getSpecificParam('username');
 		console.log("WebSocketClient: reconnecting...");
-        $.getJSON("/chaininfo").done(function(data) {
+        $.getJSON( username+ "/chaininfo").done(function(data) {
             if (data.result.height) {
             	addNodes();
                 graph.cout_blocks = parseInt(data.result.height);
@@ -281,7 +291,8 @@
     }
     function buildWS() {
         //Connect to our server: node server.js
-        var ws_url = "ws://" + location.host + "/event";
+        var username = getSpecificParam('username');
+        var ws_url = "ws://" + location.host + username + "/event";
         var socket = new WebSocket(ws_url);
         socket.binaryType = "arraybuffer"; // We are talking binary
 
@@ -348,7 +359,9 @@
                         var tstr = "<li>本块交易数: " + ts.length + "<ul>";
                         for (var i = 0; i < ts.length; i++) {
                             var t = ts[i];
-                            tstr += "<li><a target='_blank' href='/transaction/" + t.txid + "'>" + t.txid + "</a>"
+                            // add by daiyongbing on 2018-05-16
+                            // docker封装后映射路径多了两层
+                            tstr += "<li><a target='_blank' href='" + username + "/transaction/" + t.txid + "'>" + t.txid + "</a>"
                                 //+"<br/>by："+bufferToBase64(t.signature)
                                 +
                                 "</li>";
@@ -356,7 +369,7 @@
                         tstr += "</li></ul>";
                         var newH3= "Block" + graph.cout_blocks +
                         " " + dt.toLocaleString();
-                        var newAccordion = "<ul><li>前块哈希值：<a target='_blank' href='/block/hash/" +
+                        var newAccordion = "<ul><li>前块哈希值：<a target='_blank' href='" +username +"/block/hash/" +
                             blk_hash +
                             "'>" +
                             blk_hash + "</a></li>" +
