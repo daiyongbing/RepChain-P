@@ -296,7 +296,7 @@ class HashVerifyService(ra: ActorRef)(implicit executionContext: ExecutionContex
 
   /**
     * @author 代永兵
-    * @param blockHeight:区块高度
+    * @param blockHeight
     * @return BlockHash
     * @since 2018-06-05
     */
