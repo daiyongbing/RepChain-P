@@ -75,9 +75,19 @@
 <script src="./swagger-ui-standalone-preset.js"> </script>
 <script>
 window.onload = function() {
+  // add by daiyongbing on 2018-05-14
+   function getSpecificParam(paramname) {
+      var reg = new RegExp('(^|&)' + paramname+ '=([^&]*)(&|$)', 'i');
+      var paramValue = window.location.search.substr(1).match(reg);
+      if (paramValue != null && paramValue != "") {
+          return "/user/" + unescape(paramValue[2]);
+      } else
+          return "";
+  }
   // Build a system
+  var username = getSpecificParam('username');
   const ui = SwaggerUIBundle({
-    url: "/api-docs/swagger.json",
+    url: username + "/api-docs/swagger.json",
     validatorUrl : null,
     
     docExpansion: "none",

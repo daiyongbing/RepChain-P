@@ -43,16 +43,28 @@ object SystemProfile {
   private[this] var _MAX_CATCH_TRANS_NUM: Int = 0//交易最多缓存数量
   private[this] var _DISKSPACE_ALARM_NUM:Long=0//磁盘剩余空间预警 单位=M
   private[this] var _SERVERPORT:Int=8081//http服务的端口，默认为8081
-  
+
+  private[this] var _HTTP_SERVER_DOCKER_URLPARAMS:String = "" //docker封装后的路径配置参数
+  private[this] var _HTTP_SERVER_DOCKER_DOCKERNAME:String = "" //映射的docker
+
   private def SERVERPORT :Int = _SERVERPORT
   private def DISKSPACE_ALARM_NUM :Long = _DISKSPACE_ALARM_NUM
-  
-  
+
+  private def HTTP_SERVER_DOCKER_URLPARAMS:String = _HTTP_SERVER_DOCKER_URLPARAMS
+  private def HTTP_SERVER_DOCKER_DOCKERNAME:String = _HTTP_SERVER_DOCKER_DOCKERNAME
+
   private def SERVERPORT_=(value: Int): Unit = {
     _SERVERPORT = value
   }
-  
-  
+
+  private def HTTP_SERVER_DOCKER_URLPARAMS_=(value: String): Unit = {
+    _HTTP_SERVER_DOCKER_URLPARAMS = value
+  }
+
+  private def HTTP_SERVER_DOCKER_DOCKERNAME_=(value: String): Unit = {
+    _HTTP_SERVER_DOCKER_DOCKERNAME = value
+  }
+
   private def DISKSPACE_ALARM_NUM_=(value: Long): Unit = {
     _DISKSPACE_ALARM_NUM = value
   }
@@ -116,6 +128,8 @@ object SystemProfile {
     TRANS_CREATE_TYPE_=(config.getInt("system.trans_create_type"))
     DISKSPACE_ALARM_NUM_=(config.getInt("system.diskspaceManager.diskspacealarm"))
     SERVERPORT_=(config.getInt("system.httpServicePort"))
+    HTTP_SERVER_DOCKER_URLPARAMS_=(config.getString("system.http_server_docker_urlparams"))
+    HTTP_SERVER_DOCKER_DOCKERNAME_=(config.getString("system.http_server_docker_dockername"))
   }
 
   
@@ -137,4 +151,6 @@ object SystemProfile {
   def getDiskSpaceAlarm = DISKSPACE_ALARM_NUM
   
   def getHttpServicePort = SERVERPORT
+  def getHttpServerDockerUrlParams = HTTP_SERVER_DOCKER_URLPARAMS
+  def getHttpServerDockername = HTTP_SERVER_DOCKER_DOCKERNAME
 }

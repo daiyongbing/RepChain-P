@@ -38,6 +38,18 @@ class SwaggerDocService(system: ActorSystem) extends SwaggerHttpService with Has
     ru.typeOf[ChainService],
     ru.typeOf[BlockService],ru.typeOf[TransactionService],
     ru.typeOf[CertService], ru.typeOf[HashVerifyService])
+  // add by daiyongbing on 2018-06-06
+  var combinedUrl = "/"
+  var urlparam= SystemProfile.getHttpServerDockerUrlParams
+  var dockername = SystemProfile.getHttpServerDockername
+  if (urlparam != "" && urlparam != null) {
+    combinedUrl = combinedUrl+urlparam + "/" + dockername
+  } else {
+    combinedUrl = combinedUrl + dockername
+  }
+
+
+  override val basePath: String = combinedUrl
   override val info = Info(version = "0.7")
   override val externalDocs = Some(new ExternalDocs("Developers Guide", "https://repchaindoc.readthedocs.io/zh/latest/index.html"))
   override val securitySchemeDefinitions = Map("basicAuth" -> new BasicAuthDefinition())
