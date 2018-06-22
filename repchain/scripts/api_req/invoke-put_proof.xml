@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--add by daiyongbing on 2018-06-14-->
+<!-- 调用存证合约示例 -->
+<CSpec>
+    <stype>2</stype>
+    <idPath></idPath>
+    <idName>93411f12f3c853b535b80192140e0653d3c8e9686aade04df4ecef02ec1be954</idName>
+    <iptFunc>put_proof</iptFunc>
+    <iptArgs>
+        {
+        "daiyongbing" : 100000000,
+        "hujing" : 100000000
+        }
+    </iptArgs>
+    <timeout>0</timeout>
+    <secureContext>string</secureContext>
+    <code>
+    </code>
+    <ctype>2</ctype>
+</CSpec>
