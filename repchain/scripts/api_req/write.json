@@ -1,0 +1,11 @@
+{
+  "stype": 2,
+  "idPath": "",
+  "idName": "7937e6179ebdba6aefd96289898eed56dd4e61f8a5ef27eac72c3bfb4f099027",
+  "iptFunc": "write({'daiyongbing':1000000,'hujing':10000000});",
+  "iptArgs": [],
+  "timeout": 0,
+  "secureContext": "string",
+  "code": "string",
+  "ctype":0
+}

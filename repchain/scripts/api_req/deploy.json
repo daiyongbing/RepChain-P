@@ -1,0 +1,10 @@
+{
+  "stype": 1,
+  "idPath": "",
+  "iptFunc": "",
+  "iptArgs": [],
+  "timeout": 0,
+  "secureContext": "string",
+  "code": "function write(pm){for(x in pm){shim.setVal(x,pm[x]);}} function read(pn){return shim.getVal(pn);} function transfer(tfrom,tto,amount){var rfrom = shim.getVal(tfrom);var rto=shim.getVal(tto);shim.setVal(tfrom,rfrom-amount);shim.setVal(tto,rto+amount);}",
+  "ctype":0
+}
