@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<CSpec>
+    <stype>2</stype>
+    <idPath></idPath>
+    <idName>4d937ac572ca1972f47df4ece25980d783b4687c877dc4b75a38c91113e6e5c1</idName>
+    <iptFunc>downloadFileFromIPFS</iptFunc>
+    <iptArgs>
+        {
+        "fileHash":"QmTza8t5U49v9JeWhdr5ZLdyPN2UZYeed6G8VoeyZNwciY",
+        "filePath":"C:\\Users\\vic\\Desktop\\",
+        "fileName":"IPFS_TEST.jpg"
+        }
+    </iptArgs>
+    <timeout>0</timeout>
+    <secureContext>string</secureContext>
+    <code>
+    </code>
+    <ctype>2</ctype>
+</CSpec>

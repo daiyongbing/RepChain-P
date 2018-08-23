@@ -1,0 +1,463 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 用于“泉上”应用的智能合约 -->
+<CSpec>
+    <stype>1</stype>
+    <idPath></idPath>
+    <idName></idName>
+    <iptFunc></iptFunc>
+    <iptArgs>
+    </iptArgs>
+    <timeout>0</timeout>
+    <secureContext>string</secureContext>
+    <code>
+        <![CDATA[
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
+import rep.sc.contract._
+import java.io.ByteArrayInputStream
+import java.net.URLEncoder
+import java.security.cert.CertificateFactory
+
+import rep.crypto.ECDSASign
+import rep.utils.SerializeUtils
+import java.util.Base64
+import scalaj.http.{Http, MultiPart}
+import scala.util.parsing.json.JSON
+
+/**
+ * "泉上"应用智能合约V4.0版本，因V3中的源码定制没有完成，所以V4继承自V2
+ * V4版本属于实验性版本，不做具体用途。增加了网络请求与转发
+ * @author daiyongbing
+ * @version 4.0
+ * @since 2018-08-14
+ */
+
+class QuangShangContract_v4 extends IContract{
+        case class ReplaceCert(cert:String, addr:String)
+    //  case class Cert(cert:String, info:String)
+    //  case class Proof(key:String, content:String)
+    case class Charge(userAccount:String, shopAccount:String, amount:Double)
+    case class PayOffline(userAccount:String, shopName:String, totalMoney:Double)
+    case class ConsumeOnline(userAccount:String, shopName:String, totalMoney:Double)
+    case class ConsumeOffline(userAccount:String, shopName:String, totalMoney:Double)
+    case class UserRegister(userCert:String, userInfo:String)
+    case class RequestGet(targetURL:String, paramName:String, paramValue:String, connTimeoutMs:Integer, readTimeoutMs:Integer)
+    case class RequestPost(targetURL:String, params:Map[String, String])
+
+    implicit val formats = DefaultFormats
+    val PRE_CERT = "CERT_"
+    val PRE_CERT_INFO = "CERT_INFO_"
+    val  WorldStateKeyPreFix:String = "c_"
+
+    /**
+    * 创建的用户类型,备用
+    */
+    case object UserAccountType {
+        val MANAGER = 0 //管理员
+        val CUSTOMER = 1 //消费者
+        val MERCHANT = 2 //商家
+    }
+
+    /**
+    * 错误类型
+    */
+    case object ERRORTYPE{
+        val SUCCESS = 200 //成功
+        val UNKNOWN_ERROR = 100 //未知错误
+        val USER_ACCOUNT_NOT_EXIST = 101 //用户账户不存在
+        val USER_NOT_EXIST = 102 //用户不存在
+        val MERCHANT_NOT_EXIST = 103 //商家不存在
+        val MERCHANT_ACCOUNY_NOT_EXIST = 104 //商家账户不存在
+        val USER_CERT_ERROR = 105 //证书错误
+        val PARAM_TYPE_ERROR = 106 //参数类型错误
+        val ACCOUNT_EXIST = 107 //账户已存在
+        val USER_EXIST = 108 //用户已存在
+        val MERCHANT_EXIST = 109 //商家已存在
+        val CERT_NOT_EXIST = 110 //用户证书不存在
+        val INVALID_VALUE = 111 //非法的值
+        val BANLANCE_NOT_ENOUGH = 112 //余额不足
+    }
+
+    def init(ctx: ContractContext){
+        println(s"tid: $ctx.t.txid")
+    }
+
+    /**
+      * 验证用户证书，在用户注册时供registerUser()调用
+      * @param base64Cert 用户证书字符串
+      * @return 用户证书短地址
+      */
+    def verifyUserCert(base64Cert:String):String = {
+        // 验证用户证书，如果验证成功则生成证书短地址并返回给调用者
+        val certificateFactory = CertificateFactory.getInstance("X.509")
+        var userCertAddr:String = null
+        try {
+            val cert = certificateFactory.generateCertificate(
+                new ByteArrayInputStream(Base64.getDecoder.decode(base64Cert))
+            )
+            val certByte = SerializeUtils.serialise(cert)
+            userCertAddr = ECDSASign.getBitcoinAddrByCert(certByte)
+        } catch {
+            case e:Exception =>
+                "errCode:"+ ERRORTYPE.USER_CERT_ERROR
+        }
+        userCertAddr
+    }
+
+
+    /**
+      * 用户注册，实质上是利用节点的签名将用户的证书写入RepChain worldstate，之后用户就可以使用自己的证书和签名对区块链账本状态更改
+      * @param ctx  合约上下文
+      * @param data case UserRegister
+      * @return
+      */
+    def registerUser(ctx: ContractContext, data:UserRegister):Object = {
+        val userCert = data.userCert
+        val userInfo = data.userInfo
+        val userCertAddr = verifyUserCert(userCert)
+        if(userCertAddr != null || userCertAddr != "") {
+            ctx.api.check(ctx.t.cert.toStringUtf8,ctx.t)
+            ctx.api.signup(userCert,userInfo)
+        }
+        userCertAddr
+    }
+
+    /**
+      * 在区块链中创建用户账户，与用户注册不同，相当于给用户开户
+      * @param ctx 合约上下文
+      * @param data (k:userAccount, v:userBalance)
+      * @return
+      */
+    def createUserAccount(ctx: ContractContext, data:Map[String, Any]):Object = {
+        //key是用户的手机号，value是金额
+        for((k,v)<-data){
+            if(ctx.api.getVal(k) != null || ctx.api.getVal(k) != ""){
+                new Exception("帐号["+data.keys.head+"]已存在！")
+            }else{
+                ctx.api.setVal(k,v)
+            }
+        }
+        ERRORTYPE.SUCCESS.toString
+    }
+
+    /**
+      * 在区块链中创建商家收款账户，每个商家都应该在区块链中有一个虚拟的账户，记录收入信息，也作为向“财主”收钱的依据。
+      * 创建商家账户时必须验证商家证书及签名，且证书必须是节点证书
+      * @param ctx 合约上下文
+      * @param data （k:MerchantAccount, v:balance）
+      * @return
+      */
+    def createMerchantAccount(ctx: ContractContext, data:Map[String, Any]):Object = {
+        //key是商家的账号，value是金额，初始值为0
+        var errCode = ERRORTYPE.UNKNOWN_ERROR
+        for((k,v)<-data){
+            if(ctx.api.getVal(k) != null){
+                errCode = ERRORTYPE.ACCOUNT_EXIST
+            }else{
+                v match {
+                    case 0 =>
+                        ctx.api.check(ctx.t.cert.toStringUtf8,ctx.t)
+                        ctx.api.setVal(k,v)
+                        errCode = ERRORTYPE.SUCCESS
+                    case _ =>
+                        errCode = ERRORTYPE.INVALID_VALUE
+                }
+            }
+        }
+        errCode.toString
+    }
+
+    /**
+      * 检索用户信息
+      * @param ctx 合约上下文
+      * @param certAddr 用户证书短地址
+      * @return
+      */
+    def queryUserInfo(ctx: ContractContext, certAddr:String):Object = {
+        val userInfo = ctx.api.getVal(PRE_CERT_INFO + certAddr)
+        if( userInfo == null || userInfo == "" ){
+            ERRORTYPE.USER_NOT_EXIST.toString
+        }else userInfo.toString
+    }
+
+    /**
+      * 查询用户证书,这里查询的是证书的内容
+      * @param ctx 合约上下文
+      * @param certAddr 证书短地址
+      * @return 证书的字节数组
+      */
+    def queryUserCert(ctx: ContractContext, certAddr:String):Object = {
+        val certInfoByte = ctx.api.getVal(PRE_CERT+certAddr)
+        if( certInfoByte == null || certInfoByte == "" ){
+            ERRORTYPE.CERT_NOT_EXIST.toString
+        }else {
+            SerializeUtils.serialiseJson(certInfoByte)
+        }
+    }
+
+    /**
+      * 查询用户余额
+      * @param ctx 合约上下文
+      * @param userAccount 用户消费账户
+      * @return
+      */
+    def queryUserBalance(ctx: ContractContext, userAccount:String):Object = {
+        val balance = ctx.api.getVal(userAccount).toString
+        if(balance == null || balance == "") ERRORTYPE.USER_ACCOUNT_NOT_EXIST.toString
+        balance
+    }
+
+    /**
+      * 查询账户是否存在
+      * @param ctx 合约上下文
+      * @param account 要查询的账户
+      * @return
+      */
+    def isAccountExist(ctx: ContractContext,account:String):Boolean = {
+        var isExist:Boolean = false
+        if(ctx.api.getVal(account) != null){
+            isExist = true
+        }
+        isExist
+     }
+
+    /**
+      * 用户充值
+      * @param ctx 合约上下文
+      * @param data case Charge
+      * @return
+      */
+    def userCharge(ctx: ContractContext, data:Charge):Object = {
+        var errCode = ERRORTYPE.UNKNOWN_ERROR
+        if(!isAccountExist(ctx: ContractContext,data.userAccount)){
+            errCode = ERRORTYPE.USER_ACCOUNT_NOT_EXIST
+        }else if (!isAccountExist(ctx: ContractContext,data.shopAccount)){
+            errCode = ERRORTYPE.MERCHANT_ACCOUNY_NOT_EXIST
+        } else {
+            val userBalance:Double = ctx.api.getVal(data.userAccount).toString.toDouble
+            val shopBalance:Double = ctx.api.getVal(data.shopAccount).toString.toDouble
+            ctx.api.setVal(data.userAccount,(userBalance + data.amount).toString)
+            ctx.api.setVal(data.shopAccount,(shopBalance + data.amount).toString)
+            //ctx.api.getVal(data.userAccount)  //这里不返回用户的余额，原因是写入RepChain的数据不会实时更新，如果立即返回将不会得到正确的数值
+            errCode = ERRORTYPE.SUCCESS
+        }
+        errCode.toString
+    }
+
+    /**
+      * 用户线上消费
+      * @param ctx 合约上下文
+      * @param data ConsumeOnline
+      * @return
+      */
+    def userConsumeOnline(ctx: ContractContext, data:ConsumeOnline):Object = {
+        (isAccountExist(ctx: ContractContext,data.userAccount),isAccountExist(ctx: ContractContext,data.shopName)) match {
+            case (false, true) =>
+                ERRORTYPE.USER_ACCOUNT_NOT_EXIST.toString
+            case (true, false) =>
+                ERRORTYPE.MERCHANT_ACCOUNY_NOT_EXIST.toString
+            case (true, true) =>
+                val userBalance:Double = ctx.api.getVal(data.userAccount).toString.toDouble
+                val totalMoney:Double = data.totalMoney
+                if(userBalance < totalMoney){
+                    ERRORTYPE.BANLANCE_NOT_ENOUGH.toString
+                } else {
+                    ctx.api.setVal(data.userAccount, (userBalance-totalMoney).toString)
+                    ERRORTYPE.SUCCESS.toString
+                }
+            case _ =>
+                ERRORTYPE.UNKNOWN_ERROR.toString
+        }
+    }
+
+    /**
+      * 用户线下消费
+      * @param ctx 合约上下文
+      * @param data ConsumeOffline
+      * @return
+      */
+    def userConsumeOffline(ctx: ContractContext, data:ConsumeOffline):Object = {
+        (isAccountExist(ctx: ContractContext,data.userAccount),isAccountExist(ctx: ContractContext,data.shopName)) match {
+            case (false, true) =>
+                ERRORTYPE.USER_ACCOUNT_NOT_EXIST.toString
+            case (true, false) =>
+                ERRORTYPE.MERCHANT_ACCOUNY_NOT_EXIST.toString
+            case (true, true) =>
+                val userBalance:Double = ctx.api.getVal(data.userAccount).toString.toDouble
+                val totalMoney:Double = data.totalMoney
+                if(userBalance < totalMoney){
+                    ERRORTYPE.BANLANCE_NOT_ENOUGH.toString
+                } else {
+                    ctx.api.setVal(data.userAccount, (userBalance-totalMoney).toString)
+                    ERRORTYPE.SUCCESS.toString
+                }
+            case _ =>
+                ERRORTYPE.UNKNOWN_ERROR.toString
+        }
+    }
+
+    /**
+      * 加载证书
+      * @param ctx 合约上下文
+      * @param cert pemCert
+      */
+    def loadCert(ctx: ContractContext, cert: String): Unit = {
+        ctx.api.loadCert(cert)
+        print("cert:"+cert)
+    }
+
+    /**
+     *签名认证。预留接口，用于管理员人工帮助用户注册证书
+     */
+    def signup(ctx: ContractContext, data:Map[String,String]):Object = {
+        var addr = ""
+        for((k,v)<-data){
+            ctx.api.check(ctx.t.cert.toStringUtf8,ctx.t)
+                addr = ctx.api.signup(k,v)
+            }
+        addr
+    }
+
+   /**
+    *销毁证书
+    */
+    def destroyCert(ctx: ContractContext, certAddr: String): Object = {
+        ctx.api.check(ctx.t.cert.toStringUtf8,ctx.t)    //ctx中自带交易内容
+        ctx.api.destroyCert(certAddr)
+        ERRORTYPE.SUCCESS.toString
+    }
+
+    /**
+      * 替换证书
+      * @param ctx 合约上下文
+      * @param data (cert:newCert, addr:oldCertAddr)
+      * @return
+      */
+    def replaceCert(ctx: ContractContext, data:ReplaceCert): Object = {
+        val pemCert = data.cert //new cert
+        val addr = data.addr    //old cert
+        ctx.api.check(ctx.t.cert.toStringUtf8,ctx.t)
+        ctx.api.replaceCert(pemCert,addr)   // 返回短地址
+    }
+
+    /**
+     *批量写入
+     */
+    def write(ctx: ContractContext, data:Map[String,Int]):Object = {
+        for((k,v)<-data){
+            ctx.api.setVal(k, v)
+        }
+        ERRORTYPE.SUCCESS.toString
+    }
+
+    /**
+      * 存证接口，目前不确定是否会用到存证,先写上备用吧
+      * @param ctx 合约上下文
+      * @param data （k:v）
+      * @return
+      */
+    def put_proof(ctx: ContractContext, data:Map[String,Any]):Object={
+        //先检查该hash是否已经存在,如果已存在,抛异常
+        for((k,v)<-data){
+            val pv0 = ctx.api.getVal(k)
+            if(pv0 != null)
+            throw new Exception("["+k+"]已存在，当前值["+pv0+"]")
+            ctx.api.setVal(k,v)
+            print("putProof:"+k+":"+v)
+        }
+        ERRORTYPE.SUCCESS.toString
+    }
+
+    /**
+    * 处理Get请求
+    * @param ctx 合约上下文
+    * @param data RequestGet(targetURL:请求路径, paramName:参数名称, paramValue:参数值, connTimeoutMs:连接超时时间, readTimeoutMs:读取超时时间)
+    * @return response
+    */
+    def requestGet(ctx: ContractContext, data:RequestGet):Object = {
+        val response = Http(data.targetURL)
+                       .param(data.paramName, data.paramValue)
+                       .timeout(data.connTimeoutMs, data.readTimeoutMs)
+                       .asString
+        response
+    }
+
+     /**
+      * 处理POST请求
+      * @param ctx 合约上下文
+      * @param data RequestPost(targetURL:String, params:Map[String, String])
+      * @return response
+      */
+    def requestPost(ctx: ContractContext, data:RequestPost):Object = {
+        val targetURL = data.targetURL
+        val addr = data.params.get("addr").toString
+        val cid = data.params.get("cid").toString
+        val str = "{" + "\"addr\":" + addr + "," + "\"cid\":" + cid + "}"
+        val jsonStr = JSON.parseFull(str)
+        println(jsonStr.toString)
+        val response = Http(targetURL)
+                        .postMulti()
+                        .asString
+            response
+    }
+
+
+    /**
+    * 根据action,找到对应的method，并将传入的json字符串parse为method需要的传入参数
+    */
+    def onAction(ctx: ContractContext,action:String, sdata:String ):Object={
+    val json = parse(sdata)
+
+    action match {
+        case "registerUser" =>
+            registerUser(ctx, json.extract[UserRegister])
+
+        case "queryUserInfo" =>
+            queryUserInfo(ctx, json.extract[String])
+
+        case "queryUserCert" =>
+            queryUserCert(ctx, json.extract[String])
+
+        case "createUserAccount" =>
+            createUserAccount(ctx, json.extract[Map[String, Any]])
+
+        case "queryUserBalance" =>
+            queryUserBalance(ctx, json.extract[String])
+
+        case "userCharge" =>
+            userCharge(ctx, json.extract[Charge])
+
+        case "userConsumeOnline" =>
+            userConsumeOnline(ctx, json.extract[ConsumeOnline])
+
+        case "userConsumeOffline" =>
+            userConsumeOffline(ctx, json.extract[ConsumeOffline])
+
+        case "put_proof" =>
+            println(s"put_proof")
+            put_proof(ctx, json.extract[Map[String,Any]])
+
+        case "signup" =>
+            println(s"signup")
+            signup(ctx, json.extract[Map[String,String]])
+
+        case "destroyCert" =>
+            println(s"destroyCert")
+            destroyCert(ctx, json.extract[String])
+
+        case "replaceCert" =>
+            println(s"replaceCert")
+            replaceCert(ctx, json.extract[ReplaceCert])
+
+        case "requestGet" =>
+            requestGet(ctx, json.extract[RequestGet])
+
+        case "requestPost" =>
+            requestPost(ctx, json.extract[RequestPost])
+        }
+    }
+}
+]]>
+    </code>
+    <ctype>1</ctype>
+</CSpec>

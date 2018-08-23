@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 用于“链结”应用的智能合约 -->
+<CSpec>
+    <stype>1</stype>
+    <idPath></idPath>
+    <idName></idName>
+    <iptFunc></iptFunc>
+    <iptArgs>
+    </iptArgs>
+    <timeout>0</timeout>
+    <secureContext>string</secureContext>
+    <code>
+        <![CDATA[
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
+import rep.sc.contract._
+import java.io.ByteArrayInputStream
+import java.security.cert.CertificateFactory
+
+import rep.crypto.ECDSASign
+import rep.utils.SerializeUtils
+import java.util.Base64
+
+/**
+ * "链结"应用智能合约V1.0版本
+ * @author daiyongbing
+ * @version 1.0
+ * @since 2018-08-16
+ */
+
+class LianJieContract_v1 extends IContract{
+    //  case class Cert(cert:String, info:String)
+    //  case class Proof(key:String, content:String)
+    case class ReplaceCert(newPemCert:String, oldCertAddr:String)
+    case class RegisterCert(pemCert:String, certInfo:String)
+
+    implicit val formats = DefaultFormats
+
+    val PRE_CERT = "CERT_"
+    val PRE_CERT_INFO = "CERT_INFO_"
+    val PRE_CONTENT_KEY = "CONTENT_KEY_"
+    val PRE_USER_INFO = "USER_INFO_"
+
+
+    /**
+      * 错误类型
+      */
+    case object ERRORTYPE{
+        val SUCCESS = "操作成功"
+        val UNKNOWN_ERROR = "Unknown Error"
+        val USER_NOT_EXIST = "用户不存在"
+        val USER_CERT_ERROR = "证书错误"
+        val PARAM_TYPE_ERROR = "参数类型错误"
+        val USER_EXIST = "用户已存在"
+        val CERT_NOT_EXIST = "用户证书不存在"
+        val INVALID_VALUE = "非法的值"
+        val NO_ACCESS = "没有权限"
+        val CONTENT_EXIST = "内容已存在，请勿重复添加"
+    }
+
+    def init(ctx: ContractContext){
+        println(s"tid: $ctx.t.txid")
+    }
+
+    /**
+      * 认证用户证书，必须使用节点签名，上层应用应保证用户信息的真实性，这里取消了对证书的有效性检查
+      * 如果不使用用户的证书和签名，完全由节点代理，请勿使用此方法，应调用saveUserInfo()方法
+      * @param ctx  合约上下文
+      * @param data case RegisterCert
+      * @return
+      */
+    def registerCert(ctx: ContractContext, data:RegisterCert):Object = {
+        val pemCert = data.pemCert
+        val certInfo = data.certInfo
+        ctx.api.check(ctx.t.cert.toStringUtf8,ctx.t)
+        ctx.api.signup(pemCert,certInfo)
+    }
+
+   /**
+     * 保存用户信息。由于是微信小程序，如果不使用用户证书和签名，全部由节点来代理则调用此方法，否则应调用registerCert()
+     * @param ctx 合约上下文
+     * @param data(k:用户的帐号, v:帐号的信息)
+     * @return
+     */
+   def saveUserInfo(ctx: ContractContext, data:Map[String,Any]):Object = {
+        for((k, v) <- data){
+            if(ctx.api.getVal(PRE_USER_INFO+k) != null){
+                throw new Exception(ERRORTYPE.USER_EXIST)
+            }
+            ctx.api.setVal(PRE_USER_INFO + k, v)
+        }
+        ERRORTYPE.SUCCESS
+   }
+
+
+    /**
+      * 检索证书对应的用户信息。只在有用户证书和签名的情况下使用，如果完全由节点代理，则应使用queryUserInfo()方法
+      * @param ctx 合约上下文
+      * @param certAddr 用户证书短地址
+      * @return
+      */
+    def queryCertInfo(ctx: ContractContext, certAddr:String):Object = {
+        val userInfo = ctx.api.getVal(PRE_CERT_INFO + certAddr)
+        if( userInfo == null || userInfo == "" ){
+            ERRORTYPE.USER_NOT_EXIST
+        }else userInfo.toString
+    }
+
+    /**
+      * 检索证书对应的用户信息。如果完全由节点代理，则使用此方法，如果用户有自己的证书和签名，则使用queryCertInfo()
+      * @param ctx 合约上下文
+      * @param data 用户帐号（微信号）
+      * @return
+      */
+    def queryUserInfo(ctx: ContractContext, data:String):Object = {
+        val info = ctx.api.getVal(PRE_USER_INFO + data)
+        if (info == null){
+            throw new Exception(ERRORTYPE.USER_NOT_EXIST)
+        }
+        info.toString
+    }
+
+    /**
+      * 查询用户证书，仅当使用用户证书和签名的情况下
+      * @param ctx 合约上下文
+      * @param certAddr 证书短地址
+      * @return 证书的字节数组
+      */
+    def queryUserCert(ctx: ContractContext, certAddr:String):Object = {
+        val certInfoByte = ctx.api.getVal(PRE_CERT+certAddr)
+        if( certInfoByte == null || certInfoByte == "" ){
+            throw new Exception(ERRORTYPE.CERT_NOT_EXIST)
+        }else {
+            SerializeUtils.serialiseJson(certInfoByte)
+        }
+    }
+
+    /**
+      * 检查账户是否存在。如果用户有自己的证书，且使用registerCert()方法入链，则参数为证书的短地址；
+      * 如果完全由节点代理，且使用saveUserInfo()入链，则参数为用户的帐号（微信号）
+      * @param ctx 合约上下文
+      * @param account 要查询的账户
+      * @return
+      */
+    def checkAccountExist(ctx: ContractContext,account:String):Object = {
+        var isExist:Boolean = false
+        if(ctx.api.getVal(account) != null){
+            isExist = true
+        }
+        isExist.toString
+     }
+
+    /**
+      * 信息上链：文字+图片
+      * @param ctx 合约上下文
+      * @param data(k：用户帐号+内容的hash, v：上链的内容)
+      * @return result
+      */
+    def contentProof(ctx: ContractContext, data:Map[String,Any]):Object={
+        for((key,value) <- data){
+            val contentKey = PRE_CONTENT_KEY + key
+            if(ctx.api.getVal(contentKey) != null)
+            throw new Exception(ERRORTYPE.CONTENT_EXIST)
+            ctx.api.setVal(contentKey,value)
+        }
+        ERRORTYPE.SUCCESS
+    }
+
+    /**
+      * 上链内容查询
+      * @param ctx 合约上下文
+      * @param key：用户帐号+内容的hash
+      * @return 查询的内容
+      */
+    def getContent(ctx: ContractContext, key:String):Object = {
+        ctx.api.getVal(PRE_CONTENT_KEY + key).toString
+    }
+
+    /**
+      * 加载证书到信任列表，不对外开放
+      * @param ctx 合约上下文
+      * @param cert pemCert
+      */
+    def loadCert(ctx: ContractContext, cert: String): Unit = {
+        ctx.api.loadCert(cert)
+        print("cert:"+cert)
+    }
+
+
+   /**
+     * 销毁证书
+     * @param ctx 合约上下文
+     * @param certAddr 证书短地址
+     */
+   def destroyCert(ctx: ContractContext, certAddr: String): Object = {
+        ctx.api.check(ctx.t.cert.toStringUtf8,ctx.t)    //ctx中自带交易内容
+        ctx.api.destroyCert(certAddr)
+        ERRORTYPE.SUCCESS
+   }
+
+    /**
+      * 替换证书
+      * @param ctx 合约上下文
+      * @param data (newPemCert, oldCertAddr)
+      * @return 新证书的短地址
+      */
+    def replaceCert(ctx: ContractContext, data:ReplaceCert): Object = {
+        val pemCert = data.newPemCert //new cert
+        val addr = data.oldCertAddr    //old cert
+        ctx.api.check(ctx.t.cert.toStringUtf8,ctx.t)
+        ctx.api.replaceCert(pemCert,addr)   // 返回短地址
+    }
+
+    /**
+      * 根据action,找到对应的method，并将传入的json字符串parse为method需要的传入参数
+      */
+    def onAction(ctx: ContractContext,action:String, sdata:String ):Object={
+        val json = parse(sdata)
+        action match {
+            case "registerCert" =>
+                registerCert(ctx, json.extract[RegisterCert])
+
+            case "saveUserInfo" =>
+                saveUserInfo(ctx, json.extract[Map[String,Any]])
+
+            case "queryUserInfo" =>
+                queryUserInfo(ctx, json.extract[String])
+
+            case "queryCertInfo" =>
+                queryCertInfo(ctx, json.extract[String])
+
+            case "queryUserCert" =>
+                queryUserCert(ctx, json.extract[String])
+
+            case "checkAccountExist" =>
+                checkAccountExist(ctx, json.extract[String])
+
+            case "contentProof" =>
+                contentProof(ctx, json.extract[Map[String,Any]])
+
+            case "getContent" =>
+                getContent(ctx, json.extract[String])
+
+            case "destroyCert" =>
+                destroyCert(ctx, json.extract[String])
+
+            case "replaceCert" =>
+                replaceCert(ctx, json.extract[ReplaceCert])
+        }
+    }
+}
+]]>
+    </code>
+    <ctype>1</ctype>
+</CSpec>

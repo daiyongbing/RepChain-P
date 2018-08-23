@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<CSpec>
+    <stype>2</stype>
+    <idPath></idPath>
+    <idName>574d9755ac89a7c4f214285cf791dafd83c32d6a501d4c800f533395dbef02d8</idName>
+    <iptFunc>requestGet</iptFunc>
+    <iptArgs>
+        {
+        "targetURL":"http://192.168.100.191:8081/chaininfo",
+        "paramName":"",
+        "paramValue":"2",
+        "connTimeoutMs":5000,
+        "readTimeoutMs":5000
+        }
+    </iptArgs>
+    <timeout>0</timeout>
+    <secureContext>string</secureContext>
+    <code>
+    </code>
+    <ctype>2</ctype>
+</CSpec>
