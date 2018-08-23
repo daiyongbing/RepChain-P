@@ -209,12 +209,12 @@ class TemplateContract extends IContract{
 
     def addFileIntoIPFS(ctx: ContractContext, path:String):Object = {
         val fileByte = IPFSUtils.File2byte(path)
-        val addResult:MerkleNode = IPFSUtils.putFile(ipv4, fileByte)
+        val addResult:MerkleNode = IPFSUtils.uploadFile2IPFS(ipv4, fileByte)
         addResult.hash.toString
     }
 
     def downloadFileFromIPFS(ctx: ContractContext, data:DownLoadFile):Object = {
-        val fileBytes = IPFSUtils.getFile(ipv4, data.fileHash)
+        val fileBytes = IPFSUtils.downloadFileBytes(ipv4, data.fileHash)
         IPFSUtils.byte2File(fileBytes, data.filePath, data.fileName)
         ERRORTYPE.SUCCESS
     }
