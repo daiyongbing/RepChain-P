@@ -1,127 +1,91 @@
 package rep.ipfs;
 
-
 import io.ipfs.api.IPFS;
 import io.ipfs.api.MerkleNode;
 import io.ipfs.api.NamedStreamable;
-import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
 
 import java.io.*;
 
+/**
+ * IPFS的工具类
+ * @author daiyongbing
+ * @version 1.0
+ * @since 2018-08-23
+ */
 public class IPFSUtils {
-    /*public static void uploadIPFS() throws Exception{
-        //创建节点
-        IPFS ipfs = new IPFS("/ip4/192.168.56.1/tcp/5001");
-
-        //初始化IPFS 加载
-        ipfs.refs.local();
-        //要添加文件使用
-        NamedStreamable.FileWrapper file = new NamedStreamable.FileWrapper(new File("hello.txt"));
-
-        //添加文件到IPFS返回HASH值
+    /**
+     * 文件上传
+     * @param ipv4
+     * @param filePath
+     * @return 文件hash
+     */
+    public static String uploadIPFS(String ipv4, String filePath){
+        IPFS ipfs = new IPFS(ipv4);
+        try {
+            ipfs.refs.local();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        NamedStreamable.FileWrapper file = new NamedStreamable.FileWrapper(new File(filePath));
         Multihash addResult = null;
 
         {
             try {
-                addResult = ipfs.add(file).hash;
+                addResult = ipfs.add(file).get(0).hash;
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+        return addResult.toString();
+    }
 
-        //输出HASH值
-        System.out.println(addResult);
+    /**
+     * 文件下载
+     * @param ipv4
+     * @param contentsHash
+     * @return fileBytes
+     */
+    public static byte[] downLoadIPFS(String ipv4, String contentsHash) {
+        OutputStream os = null;
+        IPFS ipfs = new IPFS(ipv4);
+            Multihash filePointer =Multihash.fromBase58(contentsHash);
 
-
-        //查询IPFS里面的文件(通过HASH值查询)
-        Multihash filePointer =Multihash.fromBase58("HASH值");
-
-        byte[] data = null;    //通过HASH值查询文件转为byte[]
-
-        {
-            try {
-                data = ipfs.cat(filePointer);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        //通过文件流输出
-        InputStream inputStream=new ByteArrayInputStream(data);
-        OutputStream os = response.getOutputStream();
-        byte[] buffer = new byte[400];
-        int length = 0;
-        while ((length = inputStream.read(buffer)) > 0) {
-            os.write(buffer, 0, length);
-        }
-        os.flush();
+        byte[] fileBytes = null;
         try {
-            os.close();
+            fileBytes = ipfs.cat( filePointer );
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return fileBytes;
     }
 
-    public static void downLoadIPFS(){
-        OutputStream os = null;
-        try {
-            IPFS ipfs = new IPFS(new MultiAddress("/ip4/192.168.56.1/tcp/8888"));
-
-            ipfs.refs.local();
-
-            NamedStreamable.FileWrapper file = new NamedStreamable.FileWrapper(new File("D:/longpizi.png"));
-
-            Multihash addResult = ipfs.add(file).hash;
-
-            System.out.println(addResult);
-
-
-            Multihash filePointer =Multihash.fromBase58("HASH值");
-            byte[] data = ipfs.cat(filePointer);
-
-
-            InputStream inputStream=new ByteArrayInputStream(data);
-            os = response.getOutputStream();
-            byte[] buffer = new byte[400];
-            int length = 0;
-            while ((length = inputStream.read(buffer)) > 0) {
-                os.write(buffer, 0, length);
-            }
-        } catch (Exception e){
-            e.getMessage();
-        } finally {
-            if (os != null) {
-                try {
-                    os.flush();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (os != null) {
-                try {
-                    os.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }*/
-
-    public  static byte[] getFile(String ipv4, String fileHash){
-        byte[] fileContents = null;
+    /**
+     * 从IPFS获取文件的byte[]
+     * @param ipv4
+     * @param fileHash
+     * @return ContentsBytes
+     */
+    public  static byte[] downloadFileBytes(String ipv4, String fileHash){
+        byte[] ContentsBytes = null;
         try {
             IPFS ipfs = new IPFS(ipv4);
             ipfs.refs.local();
             Multihash filePointer = Multihash.fromBase58(fileHash);
-            fileContents = ipfs.cat(filePointer);
+            ContentsBytes = ipfs.cat(filePointer);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return fileContents;
+        return ContentsBytes;
     }
 
-    public static MerkleNode putFile(String ipv4, byte[] byteContents){
+    /**
+     * 上传文件到IPFS
+     * @param ipv4
+     * @param byteContents
+     * @return MerkleNode
+     */
+    public static MerkleNode uploadFile2IPFS(String ipv4, byte[] byteContents){
         IPFS ipfs = new IPFS(ipv4);
         MerkleNode addResult = null;
         try {
